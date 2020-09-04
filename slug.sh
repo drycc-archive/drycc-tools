@@ -16,9 +16,9 @@ function usage(){
     echo_normal
     echo_title "Usage: slug <command> [<args>...]"
     echo_normal
-    echo_normal "slug build <dest_dir>"
+    echo_normal "slug build <dest_dir> [<docker_options>...]"
     echo_normal "slug run <dest_dir> <process_type> [<docker_options>...]"
-    echo_normal "slug logs"
+    echo_normal "slug logs <docker_options>"
     echo_normal "slug stop"
     echo_normal
     echo_title "Use stack:$STACK, version: $VERSION"
@@ -42,28 +42,36 @@ build(){
         echo -e "\033[31mPlease delete or rename it first.\033[0m"
         exit 1
     fi
+    if [[ -d "$1" ]]; then
+        echo -e "\033[31mThe $1 directory already exists.\033[0m"
+        echo -e "\033[31mPlease delete it first.\033[0m"
+        exit 1
+    fi
+    size=${#@}
     rm -rf $build_dir
     mkdir -p $build_dir
     docker run --name slugbuilder \
         --rm \
         -v $PWD:/app \
         -v $build_dir:/tmp/build \
+        ${@:2:size+1} \
         drycc/slugbuilder:$VERSION.$STACK
     mv $build_dir $1
 }
 
 run(){
+    size=${#@}
     dest_dir=$(cd "$(dirname "$1")";pwd)/$1
     docker run --name slugrunner \
         --rm \
         -v $dest_dir:/app \
-        $3 \
+        ${@:3:size+1} \
         drycc/slugrunner:$VERSION.$STACK \
         /runner/init start $2 
 }
 
 logs(){
-    docker logs -f slugrunner
+    docker logs $@ slugrunner
 }
 
 stop(){
