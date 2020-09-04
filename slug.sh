@@ -17,7 +17,7 @@ function usage(){
     echo_title "Usage: slug <command> [<args>...]"
     echo_normal
     echo_normal "slug build <dest_dir>"
-    echo_normal "slug run <dest_dir> <process_type>"
+    echo_normal "slug run <dest_dir> <process_type> [<docker_options>...]"
     echo_normal "slug logs"
     echo_normal "slug stop"
     echo_normal
@@ -54,9 +54,10 @@ build(){
 
 run(){
     dest_dir=$(cd "$(dirname "$1")";pwd)/$1
-    docker run --name slugrunner -d \
+    docker run --name slugrunner \
         --rm \
         -v $dest_dir:/app \
+        $3 \
         drycc/slugrunner:$VERSION.$STACK \
         /runner/init start $2 
 }
