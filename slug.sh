@@ -11,31 +11,38 @@ function echo_normal() {
     echo $'\e[1G      ' "$*" | cat -
 }
 
-echo_title "The Drycc slug tool"
-echo_normal
-echo_title "Usage: slug <command> [<args>...]"
-echo_normal
-echo_normal "slug build <dest_dir>"
-echo_normal "slug run <dest_dir> <process_type>"
-echo_normal "slug logs"
-echo_normal "slug stop"
-echo_normal
-echo_title "Use stack:$STACK, version: $VERSION"
-echo_normal
-echo_normal "They are environment variables that you can set through export."
-echo_normal
-echo_title "For example:"
-echo_normal
-echo_normal "export STACK=heroku-18"
-echo_normal "export VERSION=canary"
-echo_normal
-echo_title "Running $1 method... but first, a cup of tea!"
-echo_normal
+function usage(){
+    echo_title "The Drycc slug tool"
+    echo_normal
+    echo_title "Usage: slug <command> [<args>...]"
+    echo_normal
+    echo_normal "slug build <dest_dir>"
+    echo_normal "slug run <dest_dir> <process_type>"
+    echo_normal "slug logs"
+    echo_normal "slug stop"
+    echo_normal
+    echo_title "Use stack:$STACK, version: $VERSION"
+    echo_normal
+    echo_normal "They are environment variables that you can set through export."
+    echo_normal
+    echo_title "For example:"
+    echo_normal
+    echo_normal "export STACK=heroku-18"
+    echo_normal "export VERSION=canary"
+    echo_normal
+    echo_title "Enjoy life, enjoy time!!!"
+    echo_normal
+}
 
 
 build(){
-    rm -rf .heroku
     build_dir="/tmp/92b4dce477634b5a9bab53e941f3f73b"
+    if [[ -d ".heroku" ]]; then
+        echo -e "\033[31mThe .heroku directory exists in the current project.\033[0m"
+        echo -e "\033[31mPlease delete or rename it first.\033[0m"
+        exit 1
+    fi
+    rm -rf $build_dir
     mkdir -p $build_dir
     docker run --name slugbuilder \
         --rm \
@@ -46,10 +53,10 @@ build(){
 }
 
 run(){
-    app_dir=$(cd "$(dirname "$1")";pwd)
+    dest_dir=$(cd "$(dirname "$1")";pwd)/$1
     docker run --name slugrunner -d \
         --rm \
-        -v $app_dir/$1:/app \
+        -v $dest_dir:/app \
         drycc/slugrunner:$VERSION.$STACK \
         /runner/init start $2 
 }
@@ -63,3 +70,8 @@ stop(){
 }
 
 $@
+
+
+if [ $? -ne 0 ]; then
+    usage
+fi
